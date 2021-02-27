@@ -60,7 +60,7 @@ const Home = () => {
                     </div>
 
                     <div className="finance-description__text">
-                        No intermediaries, no middlemen, <br/>just pure decentralized finance. 
+                        No intermediaries, no middlemen, <br/>just pure, decentralized finance. 
                         
                         <br/><br/>
                         Experience the latest advancements in Stablecoins by buying and selling SigUSD and
@@ -75,10 +75,25 @@ const Home = () => {
                         </a>
                         
                     </div>
+
+
                 </section>
+                
                 <CoinsInfo />
                 <PersonalInfo ergVal={ergVal} stableVal={stableVal} reserveVal={reserveVal} />
+
+                <footer className="footer mt-auto py-3">
+                    <span className="text-muted">
+                        <a href="https://ergoplatform.org/" target="_blank">ergoplatform.org</a> <a>|</a>  
+                        <a href="https://sigmaverse.io/" target="_blank"> sigmaverse.io</a> <a>|</a> 
+                        <a href="https://ergonaut.space/" target="_blank"> ergonaut.space</a> <a>|</a> 
+                        <a href="https://github.com/anon-real/sigma-usd" target="_blank"> github</a>
+                    </span>
+                </footer>
+                
             </main>
+
+            
         </>
     );
 };

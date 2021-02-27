@@ -1,4 +1,4 @@
-export const assemblerUrl = 'https://url_to_assembler_service/'
+export const assemblerUrl = 'https://assm.sigmausd.io/'
 export const minErgVal = 33000
 
 export const reserveName = 'SigmaRSV'

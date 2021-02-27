@@ -3,6 +3,7 @@ import cn from 'classnames';
 import InfoModal from 'components/InfoModal/InfoModal';
 import WalletModal from 'components/WalletModal/WalletModal';
 import { toast } from 'react-toastify';
+import { generateUniqueId } from 'utils/utils';
 import Card from '../../../../components/Card/Card';
 import Switch from '../../../../components/Switch/Switch';
 import { ergCoin, reserveAcronym, reserveName, usdName } from '../../../../utils/consts';
@@ -23,40 +24,78 @@ export class PurchaseForm extends Component<any, any> {
             address: '',
             dueTime: null,
             curHeight: NaN,
+            errMsg: '',
+            amount: '',
+            inputChangeTimerId: null,
+            requestId: null,
         };
     }
 
     componentDidMount() {
-        currentHeight().then(height => this.setState({curHeight: height}))
+        currentHeight().then((height) => this.setState({ curHeight: height }));
     }
 
-    isInputInvalid = async (inp: number) => {
-        if (!this.state.curHeight) return '';
-        const maxAllowed = await maxRcToMint(this.state.curHeight);
-        if (maxAllowed < inp)
-            return `Unable to mint more than ${maxAllowed} ${reserveName} based on the current reserve status`;
-        return '';
-    };
+    componentWillUnmount() {
+        clearTimeout(this.state.inputChangeTimerId);
+    }
 
-    async updateParams(amount: any) {
-        const tot = await priceToMintRc(amount);
-        const fee = await feeToMintRc(amount);
-        this.setState({
-            mintErgFee: fee / 1e9,
-            mintErgVal: (tot - fee) / 1e9,
+    isInputInvalid(inp: number, requestId: string) {
+        if (!this.state.curHeight) {
+            this.setState({
+                errMsg: '',
+            });
+            return;
+        }
+
+        maxRcToMint(this.state.curHeight).then((maxAllowed) => {
+            if (this.state.requestId !== requestId) {
+                return;
+            }
+
+            if (maxAllowed < inp) {
+                this.setState({
+                    errMsg: `Unable to mint more than ${maxAllowed} ${reserveName} based on the current reserve status`,
+                });
+                return;
+            }
+
+            this.setState({
+                errMsg: '',
+            });
         });
     }
 
-    async inputChange(inp: string) {
-        if (!isNatural(inp) || inp.startsWith('-')) return;
-        const errMsg = await this.isInputInvalid(parseInt(inp));
-        this.setState({ amount: inp, errMsg });
-        if (!inp || !inp.trim())
+    updateParams(amount: any, requestId: string) {
+        if (!amount || !amount.trim()) {
             this.setState({
                 mintErgVal: 0,
                 mintErgFee: 0,
             });
-        else await this.updateParams(inp);
+            return;
+        }
+
+        Promise.all([priceToMintRc(amount), feeToMintRc(amount)]).then(([tot, fee]) => {
+            if (this.state.requestId === requestId) {
+                this.setState({
+                    mintErgFee: fee / 1e9,
+                    mintErgVal: (tot - fee) / 1e9,
+                });
+            }
+        });
+    }
+
+    inputChange(inp: string) {
+        clearTimeout(this.state.inputChangeTimerId);
+        if (!isNatural(inp) || inp.startsWith('-')) return;
+
+        const timerId = setTimeout(() => {
+            const requestId = generateUniqueId();
+            this.setState({ requestId });
+            this.isInputInvalid(parseInt(inp), requestId);
+            this.updateParams(inp, requestId);
+        }, 200);
+
+        this.setState({ amount: inp, inputChangeTimerId: timerId });
     }
 
     startRcRedeem() {
@@ -95,12 +134,10 @@ export class PurchaseForm extends Component<any, any> {
                             value={this.state.amount}
                             step="1"
                             onChange={(e) => {
-                                this.inputChange(e.target.value).catch((err) =>
-                                    console.log('err when changing reserve amount', err),
-                                );
+                                this.inputChange(e.target.value);
                             }}
                             type="number"
-                            placeholder="Amount"
+                            placeholder="Amount (SigRSV)"
                         />
                     </div>
                     <span

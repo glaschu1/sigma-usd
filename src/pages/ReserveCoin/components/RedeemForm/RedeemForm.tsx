@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
 import cn from 'classnames';
 import { toast } from 'react-toastify';
+import { generateUniqueId } from 'utils/utils';
 import Card from '../../../../components/Card/Card';
 import Switch from '../../../../components/Switch/Switch';
 import { ergCoin, reserveAcronym, reserveName } from '../../../../utils/consts';
@@ -23,35 +24,71 @@ export class RedeemForm extends Component<any, any> {
             redeemErgVal: 0,
             redeemErgFee: 0,
             dueTime: null,
+            isModalOpen: false,
+            address: '',
+            errMsg: '',
+            amount: '',
+            inputChangeTimerId: null,
+            requestId: null,
         };
     }
 
-    async updateParams(amount: any) {
-        const tot = await amountFromRedeemingRc(amount);
-        const fee = await feeFromRedeemingRc(amount);
-        this.setState({
-            redeemErgFee: fee / 1e9,
-            redeemErgVal: (tot + fee) / 1e9,
-        });
+    componentWillUnmount() {
+        clearTimeout(this.state.inputChangeTimerId);
     }
 
-    async isInputInvalid(inp: number) {
-        const maxAllowed = await maxRcToRedeem();
-        if (maxAllowed < inp)
-            return `Unable to redeem more than ${maxAllowed} ${reserveName} based on the current reserve status`;
-        return '';
-    }
-
-    async inputChange(inp: string) {
-        if (!isNatural(inp) || inp.startsWith('-')) return;
-        const errMsg = await this.isInputInvalid(parseInt(inp));
-        this.setState({ amount: inp, errMsg });
-        if (!inp || !inp.trim())
+    updateParams(amount: any, requestId: string) {
+        if (!amount || !amount.trim()) {
             this.setState({
                 redeemErgVal: 0,
                 redeemErgFee: 0,
             });
-        else await this.updateParams(inp);
+            return;
+        }
+        Promise.all([amountFromRedeemingRc(amount), feeFromRedeemingRc(amount)]).then(
+            ([tot, fee]) => {
+                if (this.state.requestId === requestId) {
+                    this.setState({
+                        redeemErgFee: fee / 1e9,
+                        redeemErgVal: (tot + fee) / 1e9,
+                    });
+                }
+            },
+        );
+    }
+
+    isInputInvalid(inp: any, requestId: string) {
+        maxRcToRedeem().then((maxAllowed) => {
+            if (this.state.requestId !== requestId) {
+                return;
+            }
+
+            if (maxAllowed < inp) {
+                this.setState({
+                    errMsg: `Unable to redeem more than ${maxAllowed} ${reserveName} based on the current reserve status`,
+                });
+                return;
+            }
+
+            this.setState({
+                errMsg: '',
+            });
+        });
+    }
+
+    inputChange(inp: string) {
+        clearTimeout(this.state.inputChangeTimerId);
+
+        if (!isNatural(inp) || inp.startsWith('-')) return;
+
+        const timerId = setTimeout(() => {
+            const requestId = generateUniqueId();
+            this.setState({ requestId });
+            this.isInputInvalid(parseInt(inp), requestId);
+            this.updateParams(inp, requestId);
+        }, 200);
+
+        this.setState({ amount: inp, inputChangeTimerId: timerId });
     }
 
     startRcRedeem() {
@@ -74,7 +111,9 @@ export class RedeemForm extends Component<any, any> {
                 });
             })
             .catch((err) => {
-                toast.error(`Could not register the request.${err.message}`);
+                let { message } = err;
+                if (!message) message = err;
+                toast.error(`Could not register the request.\n${message}`);
                 this.setState({ loading: false });
             });
     }
@@ -90,12 +129,10 @@ export class RedeemForm extends Component<any, any> {
                             value={this.state.amount}
                             step="1"
                             onChange={(e) => {
-                                this.inputChange(e.target.value).catch((err) =>
-                                    console.log('err when changing reserve amount', err),
-                                );
+                                this.inputChange(e.target.value);
                             }}
                             type="number"
-                            placeholder="Amount"
+                            placeholder="Amount (SigRSV)"
                         />
                     </div>
                     <span

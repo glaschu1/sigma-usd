@@ -13,7 +13,7 @@ const Reservecoin = () => {
                 <section className="main-navigation">
                     <nav className="main-navigation__list">
                         <NavLink exact to="/">
-                            <span>Home</span>
+                            <span>Dashboard</span>
                         </NavLink>
                         <NavLink to="/stablecoin">
                             <span>StableCoin</span>
@@ -31,12 +31,21 @@ const Reservecoin = () => {
                             & Redeem <span className="top-section__title--colored">SigmaRSV</span>
                         </span>
                     </h2>
-                    <p className="top-section__paragraph">Earn premiums upon redemption</p>
+                    <p className="top-section__paragraph">Provide liquidity and earn premiums upon redemption</p>
                 </div>
                 <div className="reservecoin-cards">
                     <PurchaseForm />
                     <RedeemForm />
                 </div>
+
+                <footer className="footer mt-auto py-3">
+                    <span className="text-muted">
+                        <a href="https://ergoplatform.org/" target="_blank">ergoplatform.org</a> <a>|</a>  
+                        <a href="https://sigmaverse.io/" target="_blank"> sigmaverse.io</a> <a>|</a> 
+                        <a href="https://ergonaut.space/" target="_blank"> ergonaut.space</a> <a>|</a> 
+                        <a href="https://github.com/anon-real/sigma-usd" target="_blank"> github</a>
+                    </span>
+                </footer>
             </div>
         </div>
     );

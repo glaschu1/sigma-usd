@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
 import cn from 'classnames';
 import { toast } from 'react-toastify';
+import { generateUniqueId } from 'utils/utils';
 import Card from '../../../../components/Card/Card';
 import Switch from '../../../../components/Switch/Switch';
 import { ergCoin, usdAcronym, usdName } from '../../../../utils/consts';
@@ -21,40 +22,71 @@ export class RedeemForm extends Component<any, any> {
             isModalOpen: false,
             address: '',
             dueTime: null,
+            errMsg: '',
+            amount: '',
+            inputChangeTimerId: null,
+            requestId: null,
         };
     }
 
-    async updateParams(amount: any) {
-        const tot = await amountFromRedeemingSc(amount);
-        const fee = await feeFromRedeemingSc(amount);
-        this.setState({
-            redeemErgFee: fee / 1e9,
-            redeemErgVal: (tot + fee) / 1e9,
-        });
+    componentWillUnmount() {
+        clearTimeout(this.state.inputChangeTimerId);
     }
 
-    async isInputInvalid(inp: number) {
-        const maxAllowed = await scNumCirc();
-        if (maxAllowed < inp)
-            return `Unable to redeem more than ${(maxAllowed / 100).toFixed(
-                2,
-            )} ${usdName} based on current circulating supply`;
-        return '';
-    }
-
-    async inputChange(inp: string) {
-        const parts = inp.split('.');
-        if (inp.startsWith('-') || (parts.length > 1 && parts[1].length > 2)) return;
-
-        const errMsg = await this.isInputInvalid(dollarToCent(inp));
-        this.setState({ amount: inp, errMsg });
-
-        if (!inp || !inp.trim())
+    updateParams(amount: any, requestId: string) {
+        if (!amount || !amount.trim()) {
             this.setState({
                 redeemErgVal: 0,
                 redeemErgFee: 0,
             });
-        else await this.updateParams(inp);
+        }
+
+        Promise.all([amountFromRedeemingSc(amount), feeFromRedeemingSc(amount)]).then(
+            ([tot, fee]) => {
+                if (this.state.requestId === requestId) {
+                    this.setState({
+                        redeemErgFee: fee / 1e9,
+                        redeemErgVal: (tot + fee) / 1e9,
+                    });
+                }
+            },
+        );
+    }
+
+    isInputInvalid(inp: any, requestId: string) {
+        scNumCirc().then((maxAllowed) => {
+            if (this.state.requestId !== requestId) {
+                return;
+            }
+
+            if (maxAllowed < inp) {
+                this.setState({
+                    errMsg: `Unable to redeem more than ${(maxAllowed / 100).toFixed(
+                        2,
+                    )} ${usdName} based on current circulating supply`,
+                });
+                return;
+            }
+
+            this.setState({
+                errMsg: '',
+            });
+        });
+    }
+
+    inputChange(inp: string) {
+        clearTimeout(this.state.inputChangeTimerId);
+        const parts = inp.split('.');
+        if (inp.startsWith('-') || (parts.length > 1 && parts[1].length > 2)) return;
+
+        const timerId = setTimeout(() => {
+            const requestId = generateUniqueId();
+            this.setState({ requestId });
+            this.isInputInvalid(dollarToCent(inp), requestId);
+            this.updateParams(inp, requestId);
+        }, 200);
+
+        this.setState({ amount: inp, inputChangeTimerId: timerId });
     }
 
     startScRedeem() {
@@ -92,12 +124,10 @@ export class RedeemForm extends Component<any, any> {
                         <input
                             value={this.state.amount}
                             onChange={(e) => {
-                                this.inputChange(e.target.value).catch((err) =>
-                                    console.log('err when changing reserve amount', err),
-                                );
+                                this.inputChange(e.target.value);
                             }}
                             type="number"
-                            placeholder="Amount"
+                            placeholder="Amount (SigUSD)"
                         />
                     </div>
                     <span

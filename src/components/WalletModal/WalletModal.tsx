@@ -17,7 +17,7 @@ enum Wallets {
 }
 
 const TABS = {
-    [Wallets.ANY_WALLET]: 'Any Wallet',
+    [Wallets.ANY_WALLET]: 'Set Wallet',
 };
 
 const WalletModal = ({ open, onClose }: Props) => {
@@ -41,21 +41,14 @@ const WalletModal = ({ open, onClose }: Props) => {
                 <div className="wallet-modal__content">
                     {currentTab === Wallets.ANY_WALLET && (
                         <>
+                            You need to fill out a receiving address first before we can go any further because this wallet is used for any failed transactions.
+                            (and redeeming SigmaUSD/RSV) <br></br><br></br>After you do this and make a purchase you will prompted with an address to manually send your funds to. 
+                            
+
                             <p className="wallet-modal__paragraph">
-                                This option is using the assembler service.
-                            </p>
-                            <p className="wallet-modal__paragraph">
-                                The assembler service is an intermediate step
-                                that you can find out more about{' '}
-                                <a
-                                    href="https://www.ergoforum.org/t/tx-assembler-service-bypassing-node-requirement-for-dapps/443"
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                >
-                                    here
-                                </a>
-                                . Your funds will be safe using smart contracts
-                                that prevent the service from cheating!
+
+                             <br></br>Your funds will be safe using smart contracts
+                                that prevent the service from cheating! Transactions may fail due to heavy load during the launch. Try again! <br></br>
                             </p>
                             <div className="wallet-modal__input-group">
                                 <label
@@ -75,7 +68,23 @@ const WalletModal = ({ open, onClose }: Props) => {
                                     Your minted/redeemed assets will be sent to
                                     this address
                                 </span>
+
+
                             </div>
+
+                            <p className="wallet-modal__paragraph">
+                            <br></br>
+                            This option uses our assembler service, an intermediate step
+                                that you can find out more about{' '}
+                            <a
+                                href="https://www.ergoforum.org/t/tx-assembler-service-bypassing-node-requirement-for-dapps/443"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                            >
+                                here
+                            </a>
+                            . 
+</p>
                         </>
                     )}
                 </div>

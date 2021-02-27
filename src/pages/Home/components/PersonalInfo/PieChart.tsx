@@ -7,34 +7,14 @@ interface IPieChartProps {
     compact?: boolean;
 }
 export enum COLORSIDS {
-    REBELCASH = 'RebelCash',
-    REBELSHARE = 'RebelShare',
+    SIGMAUSD = 'SigmaUSD',
+    SIGMARSV = 'SigmaRSV',
     ERGO = 'Ergo',
 }
 export const COLORS = {
-    [COLORSIDS.REBELCASH]: '#2F5EF6',
-    [COLORSIDS.REBELSHARE]: '#610BFC',
+    [COLORSIDS.SIGMAUSD]: '#2F5EF6',
+    [COLORSIDS.SIGMARSV]: '#0bfcae',
     [COLORSIDS.ERGO]: '#ffffff',
-};
-
-const RADIAN = Math.PI / 180;
-
-const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent }: any) => {
-    const radius = innerRadius + (outerRadius - innerRadius) * 0.01;
-    const x = cx + radius * Math.cos(-midAngle * RADIAN);
-    const y = cy + radius * Math.sin(-midAngle * RADIAN);
-
-    return (
-        <text
-            x={x}
-            y={y}
-            textAnchor={x > cx ? 'start' : 'end'}
-            dominantBaseline="central"
-            className="chart__text"
-        >
-            {`${(percent * 100).toFixed(0)}%`}
-        </text>
-    );
 };
 
 export class PieChartComponent extends React.PureComponent<IPieChartProps> {
@@ -65,11 +45,11 @@ export class PieChartComponent extends React.PureComponent<IPieChartProps> {
                             activeIndex={this.state.activeIndex}
                             data={filteredData}
                             innerRadius={60}
-                            outerRadius={90}
+                            outerRadius={100}
                             fill="#8884d8"
                             dataKey="value"
                             blendStroke
-                            label={renderCustomizedLabel}
+                            label={false}
                             labelLine={false}
                         >
                             {filteredData.map((entry: any) => (

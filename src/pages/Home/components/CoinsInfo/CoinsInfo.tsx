@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
-import { reserveAcronym, reserveName, usdAcronym } from 'utils/consts';
-import { rcNumCirc, rcPrice, scNumCirc, scPrice } from '../../../../utils/ageHelper';
+import { reserveAcronym, usdAcronym } from 'utils/consts';
+import { currentReserveRatio, rcNumCirc, rcPrice, scNumCirc, scPrice } from '../../../../utils/ageHelper';
 import { numberWithCommas } from '../../../../utils/serializer';
 
 export class CoinsInfo extends Component<any, any> {
@@ -11,6 +11,7 @@ export class CoinsInfo extends Component<any, any> {
             rcPrice: NaN,
             scCirc: NaN,
             rcCirc: NaN,
+            reserveRatio: NaN,
         };
     }
 
@@ -23,6 +24,7 @@ export class CoinsInfo extends Component<any, any> {
             scPrice: (sc / 1e7).toFixed(8),
             rcPrice: (rc / 1e9).toFixed(8),
             scCirc: (scCirc / 100).toFixed(2),
+            reserveRatio: currentReserveRatio(),
             rcCirc,
         });
     }
@@ -52,7 +54,9 @@ export class CoinsInfo extends Component<any, any> {
                                     <br />
                                     much ERG is in 1 {usdAcronym}.
                                     <br />
-                                    <span>ERG 1 ≈ {(1 / this.state.scPrice).toFixed(5)} {usdAcronym}</span>
+                                    <span>
+                                        ERG 1 ≈ {(1 / this.state.scPrice).toFixed(5)} {usdAcronym}
+                                    </span>
                                 </div>
                             </span>
                         </div>
@@ -62,6 +66,17 @@ export class CoinsInfo extends Component<any, any> {
                         <div className="coin-prop__title">Circulating Supply</div>
                         <div className="coin-prop__value">
                             {numberWithCommas(this.state.scCirc)}
+                        </div>
+                    </div>
+
+                    <div className="coin-prop-footer">
+                        <div className="coin-prop-right">
+                            <div className="coin-prop__title">Current Ratio</div>
+                            <div className="coin-prop-right__value">
+                                <span>
+                                    1 ERG ≈ {(1 / this.state.scPrice).toFixed(2)} {usdAcronym}
+                                </span>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -81,7 +96,10 @@ export class CoinsInfo extends Component<any, any> {
                                     <br />
                                     much ERG is in 1 {reserveAcronym}.
                                     <br />
-                                    <span>ERG 1 ≈ {(1 / this.state.rcPrice).toFixed(0)} {reserveAcronym}</span>
+                                    <span>
+                                        ERG 1 ≈ {(1 / this.state.rcPrice).toFixed(0)}{' '}
+                                        {reserveAcronym}
+                                    </span>
                                 </div>
                             </span>
                         </div>
@@ -92,6 +110,24 @@ export class CoinsInfo extends Component<any, any> {
 
                         <div className="coin-prop__value">
                             {numberWithCommas(this.state.rcCirc)}
+                        </div>
+                    </div>
+
+                    <div className="coin-prop-footer">
+                        <div className="coin-prop-right">
+                            <div className="coin-prop__title">Current Ratio</div>
+                            <div className="coin-prop-right__value">
+                                <span>
+                                    1 ERG ≈ {(1 / this.state.rcPrice).toFixed(0)} {reserveAcronym}
+                                </span>
+                            </div>
+                        </div>
+
+                        <div className="coin-prop-right">
+                            <div className="coin-prop-right__title">Reserve Ratio</div>
+                            <div className="coin-prop-right__value">
+                                <span>{this.state.reserveRatio}%</span>
+                            </div>
                         </div>
                     </div>
                 </div>

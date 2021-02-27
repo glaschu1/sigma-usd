@@ -8,7 +8,7 @@ import { currentHeight, getBalanceFor, getUnconfirmedTxsFor } from './explorer';
 
 let ageusd = import('ageusd');
 
-const implementor = '9ho3quMB1Vs6ejycB4t3tNw5oTkiu2ZSGT9VfBFshxb21baT3ex';
+const implementor = '9hFmeUHVttZmgtq4DEosEzJb3bTjx9HMJVptmMgfaHH9tYyGYTE';
 const considerUnconfirmed = true;
 let explorerEndpoint = 'https://api.ergoplatform.com/api';
 let bankBox = undefined;
@@ -38,20 +38,27 @@ export async function forceUpdateState() {
             if (
                 tx.outputs[0].assets
                     .map((asset) => asset.tokenId)
-                    .includes(bankNFT)
+                    .includes(bankNFT) &&
+                tx.inputs[0].address === tx.outputs[0].address
             ) {
                 outBanks = outBanks.concat([tx.outputs[0]]);
                 inIds = inIds.concat([tx.inputs[0].id]);
             }
         });
+        console.log(inIds, outBanks)
         let notSpent = outBanks.filter(
             (bank) => !inIds.includes(bank.boxId) && !inIds.includes(bank.id)
         );
         if (notSpent.length === 1) {
             body = {
-                items: [notSpent[0]],
+                items: [notSpent[0]]
             };
-        } else console.error('bank boxes length is ' + notSpent.length);
+        } else if (notSpent.length > 1) {
+            body = {
+                items: [notSpent[0]]
+            };
+            console.error('bank boxes length is ' + notSpent.length, notSpent);
+        }
     }
     bankBox = age.BankBox.w_process_explorer_response(JSON.stringify(body))[0];
 
@@ -189,6 +196,8 @@ export async function mintScTx(amount) {
     );
     res = JSON.parse(res);
     res.requests.splice(3, 1);
+    res.requests[1].value += res.requests[2].value
+    res.requests.splice(2, 1);
     res.inputs[1] = '$userIns';
     return res;
 }
@@ -213,6 +222,8 @@ export async function mintRcTx(amount) {
     );
     res = JSON.parse(res);
     res.requests.splice(3, 1);
+    res.requests[1].value += res.requests[2].value
+    res.requests.splice(2, 1);
     res.inputs[1] = '$userIns';
     return res;
 }
@@ -263,6 +274,8 @@ export async function redeemRcTx(amount) {
 
 export async function maxRcToRedeem() {
     if (!bankBox || !oracleBox) await forceUpdateState();
+    console.log(bankBox.current_reserve_ratio(oracleBox))
+    if (bankBox.current_reserve_ratio(oracleBox) <= 400n) return 0
     return Number(bankBox.num_able_to_redeem_reservecoin(oracleBox));
 }
 
@@ -274,6 +287,22 @@ export async function maxScToMint() {
 export async function maxRcToMint(height) {
     if (!bankBox || !oracleBox) await forceUpdateState();
     return Number(bankBox.num_able_to_mint_reservecoin(oracleBox, BigInt(height)));
+}
+
+export async function ableRcToRedeem(amount) {
+    if (!bankBox || !oracleBox) await forceUpdateState();
+    console.log(amount, BigInt(bankBox.redeem_reservecoin_reserve_ratio(oracleBox, BigInt(amount))));
+    return Number(bankBox.able_to_redeem_reservecoin_amount(oracleBox, BigInt(amount)));
+}
+
+export async function ableScToMint(amount) {
+    if (!bankBox || !oracleBox) await forceUpdateState();
+    return Number(bankBox.able_to_mint_stablecoin_amount(oracleBox, BigInt(amount)));
+}
+
+export async function ableRcToMint(height, amount) {
+    if (!bankBox || !oracleBox) await forceUpdateState();
+    return Number(bankBox.able_to_mint_reservecoin_amount(oracleBox, BigInt(amount), BigInt(height)));
 }
 
 export async function scPrice() {
@@ -308,3 +337,6 @@ export async function ergBalance(bal) {
     return bal['erg'] || 0;
 }
 
+export function currentReserveRatio() {
+    return Number(bankBox.current_reserve_ratio(oracleBox));
+}
